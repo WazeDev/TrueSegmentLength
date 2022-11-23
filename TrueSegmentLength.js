@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME True Segment Length
 // @namespace    https://greasyfork.org/users/30701-justins83-waze
-// @version      2022.11.23.02
+// @version      2022.11.23.03
 // @description  Displays geodesic segment length in feet & meters
 // @author       JustinS83
 // @include      https://www.waze.com/editor*
