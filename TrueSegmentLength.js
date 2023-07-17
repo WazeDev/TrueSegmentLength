@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME True Segment Length
 // @namespace    https://greasyfork.org/users/30701-justins83-waze
-// @version      2023.06.06.01
+// @version      2023.07.17.01
 // @description  Displays geodesic segment length in feet & meters
 // @author       JustinS83
 // @include      https://www.waze.com/editor*
@@ -51,14 +51,15 @@
     }
 
     function updateDisplay(){
-        var count = WazeWrap.getSelectedFeatures().length;
+        var count = WazeWrap.getSelectedDataModelObjects().length;
         var metersLength = 0;
         var bold = false;
         if(count > 0){
             for(let i=0;i<count;i++){
-                if(WazeWrap.getSelectedFeatures()[i].attributes.repositoryObject.type === "segment"){
-                    metersLength += WazeWrap.Geometry.calculateDistance(WazeWrap.getSelectedFeatures()[i].geometry.components);
-                    if(!WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.isUnchanged())
+                let seg = WazeWrap.getSelectedDataModelObjects()[i];
+                if(seg.type === "segment"){
+                    metersLength += WazeWrap.Geometry.calculateDistance(seg.geometry.components);
+                    if(!seg.isUnchanged())
                         bold = true;
                 }
             }
@@ -67,7 +68,7 @@
                 var ftLength = Math.round(metersLength * 3.28084 *100)/100;
                 var milesLength = Math.round(ftLength/5280 *100)/100;
 
-                if(WazeWrap.getSelectedFeatures()[0].attributes.repositoryObject.attributes.id < 0){ //segment has not yet been saved
+                if(WazeWrap.getSelectedDataModelObjects()[0].attributes.id < 0){ //segment has not yet been saved
                     var list = $('#segment-edit-general > ul')[0];
                     var newItem = document.createElement("LI");
                     var textnode = document.createTextNode("Length: " + metersLength +" m");
