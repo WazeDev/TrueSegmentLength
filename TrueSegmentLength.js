@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME True Segment Length
 // @namespace    https://greasyfork.org/users/30701-justins83-waze
-// @version      2023.07.17.01
+// @version      2024.06.21.01
 // @description  Displays geodesic segment length in feet & meters
 // @author       JustinS83
 // @include      https://www.waze.com/editor*
@@ -54,11 +54,12 @@
         var count = WazeWrap.getSelectedDataModelObjects().length;
         var metersLength = 0;
         var bold = false;
+
         if(count > 0){
             for(let i=0;i<count;i++){
                 let seg = WazeWrap.getSelectedDataModelObjects()[i];
                 if(seg.type === "segment"){
-                    metersLength += WazeWrap.Geometry.calculateDistance(seg.geometry.components);
+                    metersLength += WazeWrap.Geometry.calculateDistance(seg.getOLGeometry().components);
                     if(!seg.isUnchanged())
                         bold = true;
                 }
@@ -66,10 +67,10 @@
             if(metersLength >0){
                 var isUSA = (typeof W.model.countries.objects[235] !== 'undefined');
                 var ftLength = Math.round(metersLength * 3.28084 *100)/100;
-                var milesLength = Math.round(ftLength/5280 *100)/100;
+                var milesLength = Math.round(ftLength/5280 *1000)/1000;
 
                 if(WazeWrap.getSelectedDataModelObjects()[0].attributes.id < 0){ //segment has not yet been saved
-                    var list = $('#segment-edit-general > ul')[0];
+                    var list = $('#segment-edit-general > div > ul')[0];
                     var newItem = document.createElement("LI");
                     var textnode = document.createTextNode("Length: " + metersLength +" m");
                     newItem.appendChild(textnode);
@@ -85,13 +86,13 @@
                 else{
                     try
                     {
-                        $('#segment-edit-general > ul > li:nth-child(1) > span')[1].innerHTML = (Math.round(metersLength*100)/100) + " m";
-                        if($('#segment-edit-general > ul > li:nth-child(1) > span').length === 2 && isUSA)
-                            $('#segment-edit-general > ul > li:nth-child(1)').append(`<br/><span class="name">Length: </span><span class="value">${ftLength} ft</span><span class="value"> (${milesLength} miles)</span>`);
+                        $('#segment-edit-general > div > ul > li:nth-child(1) > span')[1].innerHTML = (Math.round(metersLength*100)/100) + " m";
+                        if($('#segment-edit-general > div > ul > li:nth-child(1) > span').length === 2 && isUSA)
+                            $('#segment-edit-general > div > ul > li:nth-child(1)').append(`<br/><span class="name">Length: </span><span class="value">${ftLength} ft</span><span class="value"> (${milesLength} miles)</span>`);
                         if(bold){
-                            $('#segment-edit-general > ul > li:nth-child(1) > span').css('font-weight', "bold");
+                            $('#segment-edit-general > div > ul > li:nth-child(1) > span').css('font-weight', "bold");
                             if(isUSA)
-                                $('#segment-edit-general > ul > li:nth-child(2) > span').css('font-weight', "bold");
+                                $('#segment-edit-general > div > ul > li:nth-child(2) > span').css('font-weight', "bold");
                         }
                     }
                     catch(ex)
