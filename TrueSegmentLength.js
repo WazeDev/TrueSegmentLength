@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME True Segment Length
 // @namespace    https://greasyfork.org/users/30701-justins83-waze
-// @version      2026.04.20.01
+// @version      2026.04.20.02
 // @description  Displays geodesic segment length in feet & meters
 // @author       JustinS83
 // @include      https://www.waze.com/editor*
@@ -54,7 +54,6 @@
     }
 
     function updateDisplay(){
-        debugger;
         let selection = sdk.Editing.getSelection();
         if(selection && selection?.ids.length > 0 && selection.objectType == ObjectTypes.SEGMENT){
             var count = selection.ids.length;
