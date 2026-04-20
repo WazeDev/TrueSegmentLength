@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME True Segment Length
 // @namespace    https://greasyfork.org/users/30701-justins83-waze
-// @version      2026.04.19.01
+// @version      2026.04.20.01
 // @description  Displays geodesic segment length in feet & meters
 // @author       JustinS83
 // @include      https://www.waze.com/editor*
@@ -41,10 +41,10 @@
 
     function init(){
         sdk.Events.on({ eventName: 'wme-selection-changed', eventHandler: waitAndUpdate });
-        sdk.Events.on({ eventName: 'wme-after-edit', eventHandler: updateDisplay });
-        sdk.Events.on({ eventName: 'wme-after-undo', eventHandler: updateDisplay });
-        sdk.Events.on({ eventName: 'wme-after-redo-clear', eventHandler: updateDisplay });
-        sdk.Events.on({ eventName: 'wme-no-edits', eventHandler: updateDisplay });
+        sdk.Events.on({ eventName: 'wme-after-edit', eventHandler: waitAndUpdate });
+        sdk.Events.on({ eventName: 'wme-after-undo', eventHandler: waitAndUpdate });
+        sdk.Events.on({ eventName: 'wme-after-redo-clear', eventHandler: waitAndUpdate });
+        sdk.Events.on({ eventName: 'wme-no-edits', eventHandler: waitAndUpdate });
         console.log("WME True Segment Length" + GM_info.script.version);
     }
 
@@ -54,6 +54,7 @@
     }
 
     function updateDisplay(){
+        debugger;
         let selection = sdk.Editing.getSelection();
         if(selection && selection?.ids.length > 0 && selection.objectType == ObjectTypes.SEGMENT){
             var count = selection.ids.length;
