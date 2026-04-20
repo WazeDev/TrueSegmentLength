@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         WME True Segment Length
 // @namespace    https://greasyfork.org/users/30701-justins83-waze
-// @version      2024.06.21.01
+// @version      2026.04.19.01
 // @description  Displays geodesic segment length in feet & meters
 // @author       JustinS83
 // @include      https://www.waze.com/editor*
@@ -9,8 +9,10 @@
 // @include      https://beta.waze.com/*
 // @exclude      https://www.waze.com/user/editor*
 // @grant        none
-// @require      https://greasyfork.org/scripts/24851-wazewrap/code/WazeWrap.js
+// @require      https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js
 // @license      GPLv3
+// @downloadURL https://update.greasyfork.org/scripts/25444/WME%20True%20Segment%20Length.user.js
+// @updateURL https://update.greasyfork.org/scripts/25444/WME%20True%20Segment%20Length.meta.js
 // ==/UserScript==
 
 /* global W */
@@ -18,30 +20,31 @@
 /* ecmaVersion 2017 */
 /* global $ */
 /* global _ */
-/* global WazeWrap */
 /* eslint curly: ["warn", "multi-or-nest"] */
 
 (function() {
 
-    function bootstrap(tries=1) {
+    let sdk;
+    const ObjectTypes = Object.freeze({
+        SEGMENT: 'segment',
+        PLACE: 'venue'});
 
-        if (W &&
-            W.map &&
-            W.model &&
-            $ && WazeWrap.Ready)
-            init();
-        else if (tries < 1000)
-            setTimeout(function () {bootstrap(++tries);}, 200);
+    async function bootstrap() {
+        await window.SDK_INITIALIZED;
+        sdk = getWmeSdk({ scriptId: 'wme-tsl', scriptName: 'WME True Segment Length' });
+        await sdk.Events.once({ eventName: 'wme-ready' });
+
+        init();
     }
 
     bootstrap();
 
     function init(){
-        W.selectionManager.events.register("selectionchanged", null, waitAndUpdate);
-        W.model.actionManager.events.register("afteraction",null, updateDisplay);
-        W.model.actionManager.events.register("afterundoaction",null, updateDisplay);
-        W.model.actionManager.events.register("afterclearactions",null, updateDisplay);
-        W.model.actionManager.events.register("noActions",null, waitAndUpdate);
+        sdk.Events.on({ eventName: 'wme-selection-changed', eventHandler: waitAndUpdate });
+        sdk.Events.on({ eventName: 'wme-after-edit', eventHandler: updateDisplay });
+        sdk.Events.on({ eventName: 'wme-after-undo', eventHandler: updateDisplay });
+        sdk.Events.on({ eventName: 'wme-after-redo-clear', eventHandler: updateDisplay });
+        sdk.Events.on({ eventName: 'wme-no-edits', eventHandler: updateDisplay });
         console.log("WME True Segment Length" + GM_info.script.version);
     }
 
@@ -51,25 +54,23 @@
     }
 
     function updateDisplay(){
-        var count = WazeWrap.getSelectedDataModelObjects().length;
-        var metersLength = 0;
-        var bold = false;
+        let selection = sdk.Editing.getSelection();
+        if(selection && selection?.ids.length > 0 && selection.objectType == ObjectTypes.SEGMENT){
+            var count = selection.ids.length;
+            var bold = false;
 
-        if(count > 0){
-            for(let i=0;i<count;i++){
-                let seg = WazeWrap.getSelectedDataModelObjects()[i];
-                if(seg.type === "segment"){
-                    metersLength += WazeWrap.Geometry.calculateDistance(seg.getOLGeometry().components);
-                    if(!seg.isUnchanged())
-                        bold = true;
-                }
-            }
+            const metersLength = selection.ids.reduce((total, id) => {
+                const seg = sdk.DataModel.Segments.getById({segmentId: id});
+                if(!seg) return total;
+                return total + turf.length(seg.geometry, {units:'meters'});
+            }, 0);
+
             if(metersLength >0){
-                var isUSA = (typeof W.model.countries.objects[235] !== 'undefined');
+                var isUSA = sdk.Settings.getRegionCode() === 'usa';
                 var ftLength = Math.round(metersLength * 3.28084 *100)/100;
                 var milesLength = Math.round(ftLength/5280 *1000)/1000;
 
-                if(WazeWrap.getSelectedDataModelObjects()[0].attributes.id < 0){ //segment has not yet been saved
+                if(selection.ids[0] < 0){ //segment has not yet been saved
                     var list = $('#segment-edit-general > div > ul')[0];
                     var newItem = document.createElement("LI");
                     var textnode = document.createTextNode("Length: " + metersLength +" m");
